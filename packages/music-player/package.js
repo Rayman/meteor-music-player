@@ -5,7 +5,10 @@ Package.describe({
 Package.on_use(function (api, where) {
   api.use("coffeescript", "client");
   api.add_files('music-player.coffee', 'client');
+  api.add_files('backend.coffee', 'client');
+
   api.export && api.export(['MusicPlayer'], 'client');
+
 });
 
 /*

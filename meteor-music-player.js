@@ -1,5 +1,9 @@
 if (Meteor.isClient) {
 
+  youtubeBackend = new MusicPlayer.backends.youtube({
+
+  });
+
   musicPlayer = new MusicPlayer({
     backends: 'youtube',
   });

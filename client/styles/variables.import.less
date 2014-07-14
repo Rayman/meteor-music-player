@@ -1,0 +1,101 @@
+// Defines where the package is
+@bootstrap3-less-root: "/packages/bootstrap3-less";
+
+// Import Bootstrap core variables and mixin
+// ---------------------------------------
+// (you need these first, to get the default setup for bootstrap)
+
+@import "@{bootstrap3-less-root}/lib/less/variables.import.less";
+@import "@{bootstrap3-less-root}/lib/less/mixins.import.less";
+
+// Application Overrides (config)
+// ---------------------------------------
+// (Here you can override any variables defined in the default set above)
+
+@icon-font-path: "@{bootstrap3-less-root}/lib/fonts/";
+
+body {
+  background-image: url("https://s3-us-west-1.amazonaws.com/toneden-static/production/images/template/bg/cover.jpg");
+  background-size: cover;
+}
+
+.player {
+  border-radius: @border-radius-base;
+  background-color: rgba(255, 255, 255, 0.8);
+  .container-fluid;
+}
+
+.player-header {
+  .make-row();
+  border: 0px solid @gray-lighter;
+  border-width: 0px 0px 1px 0px;
+
+  .album-art {
+    padding: 20px 0;
+    img {
+      .center-block;
+      .square(100px);
+      .img-circle();
+    }
+  }
+
+  .song-name {
+    .text-center;
+  }
+
+  .artist-name {
+    .text-center;
+    font-weight: bold;
+  }
+}
+
+.player-stats {
+  .make-row();
+
+  div{
+    padding: 16px 0px;
+    .text-center();
+  }
+}
+
+.player-controls {
+  .make-row();
+  border: 0px solid @gray-lighter;
+  border-width: 1px 0px;
+
+  div {
+    padding: 16px;
+    .text-center();
+  }
+
+  .player-repeat {
+    .make-xs-column(3);
+  }
+  .player-previous {
+    .make-xs-column(1);
+  }
+  .player-play {
+    .make-xs-column(4);
+  }
+  .player-next {
+    .make-xs-column(1);
+  }
+  .player-shuffle {
+    .make-xs-column(3);
+  }
+}
+
+.player-position {
+  .make-row();
+  padding: 16px;
+
+  .player-length {
+    .make-xs-column(2);
+  }
+  .player-slider {
+    .make-xs-column(8);
+  }
+  .player-remaining {
+    .make-xs-column(2);
+  }
+}

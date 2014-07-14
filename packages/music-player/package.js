@@ -3,11 +3,15 @@ Package.describe({
 });
 
 Package.on_use(function (api, where) {
-  api.add_files('music-player.js', 'client');
+  api.use("coffeescript", "client");
+  api.add_files('music-player.coffee', 'client');
   api.export && api.export(['MusicPlayer'], 'client');
 });
 
+/*
 Package.on_test(function (api) {
+  api.use("coffeescript", "client");
   api.use('music-player');
-  api.add_files('music-player_tests.js', 'client');
+  api.add_files('music-player_tests.coffee', 'client');
 });
+*/

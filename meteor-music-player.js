@@ -4,19 +4,26 @@ if (Meteor.isClient) {
 
   });
 
+  soundcloudBackend = new MusicPlayer.backends.soundcloud({
+
+  })
+
   musicPlayer = new MusicPlayer({
     backends: 'youtube',
   });
 
-  Template.player.isPaused = function () {
-    return musicPlayer.isPaused();
+  Template.player.statusIs = function (str) {
+    var status = soundcloudBackend.status();
+    console.log('status changed:', status);
+    return status == str;
   }
 
-  Template.hello.events({
-    'click input': function () {
-      // template data, if any, is available in 'this'
-      if (typeof console !== 'undefined')
-        console.log("You pressed the button");
-    }
+  Template.player.events({
+    'click player-pause': function () {
+      soundcloudBackend.pause();
+    },
+    'click player-play': function () {
+      soundcloudBackend.play();
+    },
   });
 }

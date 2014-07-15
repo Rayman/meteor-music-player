@@ -44,10 +44,14 @@
       <div class="player-previous">
         <span class="glyphicon glyphicon-chevron-left"></span>
       </div>
-      {{#if isPaused}}
-        <div class="player-pause"><span></span></div>
+      {{#if statusIs "loading"}}
+        <div class="player-loading"><span></span></div>
       {{else}}
-        <div class="player-play"><span></span></div>
+        {{#if statusIs "playing"}}
+          <div class="player-pause"><span></span></div>
+        {{else}}
+          <div class="player-play"><span></span></div>
+        {{/if}}
       {{/if}}
       <div class="player-previous">
         <span class="glyphicon glyphicon-chevron-right"></span>

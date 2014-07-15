@@ -61,6 +61,9 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @_position = 0
     @_positionDep = new Deps.Dependency
 
+    @_duration = 0
+    @_durationDep = new Deps.Dependency
+
   init: ->
     loadScript "//connect.soundcloud.com/sdk.js", =>
       SC.initialize
@@ -82,7 +85,7 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     that = this
     SC.stream(url, {
       whileplaying: ->
-        that.onPosition(this.position)
+        that._whileplaying(this)
     }, (sound) =>
       sound.play()
       @sound = sound
@@ -114,10 +117,22 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @_metadataDep.depend()
     return @_metadata.artwork_url ? ""
 
-  onPosition: (pos) =>
-    @_position = pos
-    @_positionDep.changed()
+  _whileplaying: (sound) =>
+    # console.log "whileplaying", sound.position, sound.duration, sound.durationEstimate
+
+    if @_position isnt sound.position
+      @_position = sound.position
+      @_positionDep.changed()
+
+    if @_duration isnt sound.durationEstimate
+      @_duration = sound.durationEstimate
+      @_durationDep.changed()
+      console.log "@_durationDep.changed()"
 
   getPosition: ->
     @_positionDep.depend()
     return @_position
+
+  getDuration: ->
+    @_durationDep.depend()
+    return @_duration

@@ -38,6 +38,14 @@ if (Meteor.isClient) {
     return soundcloudBackend.getPosition();
   };
 
+  Template.player.duration = function () {
+    return soundcloudBackend.getDuration();
+  };
+
+  Template.player.remaining = function () {
+    return "0:00";
+  };
+
   Template.player.events({
     'click player-pause': function () {
       soundcloudBackend.pause();

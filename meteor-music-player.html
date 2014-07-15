@@ -14,7 +14,7 @@
         {{> player}}
       </div>
     </div>
-    <p>More content here <button type="button" class="btn btn-primary">Primary</button></p>
+    <p>More content here <button type="button" class="btn btn-primary">Load song!</button></p>
   </div>
 </template>
 
@@ -23,10 +23,9 @@
     <div class="player-header">
 
       <div class="album-art">
-        <img src="http://www.slate.com/content/dam/slate/blogs/browbeat/2011/09/29/hugo_chavez_caption_contest/Drake_Nothing_Was_the_Same_Album_Cover.jpg.CROP.article568-large.jpg" />
+        <img src="{{artwork_url}}" />
       </div>
-      <div class="song-name">Title</div>
-      <div class="artist-name">Artist</div>
+      <div class="song-name">{{title}}</div>
     </div>
     <div class="player-stats">
       <div class="col-xs-3">
@@ -60,7 +59,7 @@
     </div>
     <div class="player-position">
       <div class="player-length">0:00</div>
-      <div class="player-slider">---</div>
+      <div class="player-slider">{{position}}</div>
       <div class="player-remaining">0:00</div>
     </div>
   </div>

@@ -35,12 +35,12 @@ class MusicPlayer.backends.youtube extends MusicPlayer.backend
     @_status = MusicPlayer.PlayerState.LOADING
 
   init: (el) ->
-    loadScript("https://www.youtube.com/player_api", @loaded)
+    loadScript("https://www.youtube.com/player_api", @_loaded)
 
     window.onYouTubePlayerAPIReady = =>
-      @loaded()
+      @_loaded()
 
-  loaded: ->
+  _loaded: ->
     console.log "YouTube player ready"
 
   play: ->
@@ -51,30 +51,73 @@ class MusicPlayer.backends.youtube extends MusicPlayer.backend
 class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
   constructor: (options = {}) ->
     @name = "soundcloud"
+
     @_status = MusicPlayer.PlayerState.LOADING
     @_statusDep = new Deps.Dependency
+
+    @_metadata = {}
+    @_metadataDep = new Deps.Dependency
+
+    @_position = 0
+    @_positionDep = new Deps.Dependency
 
   init: ->
     loadScript "//connect.soundcloud.com/sdk.js", =>
       SC.initialize
         client_id: 'ceafa15d4779c3532c15ed862d3ad1c3'
       SC.whenStreamingReady =>
-        @loaded()
+        @_loaded()
+    return @
 
-  loaded: (e) ->
+  _loaded: (e) ->
     console.log "SoundCloud player ready"
     @_status = MusicPlayer.PlayerState.ENDED
     @_statusDep.changed()
 
-  play: ->
-    console.log "play", this
+  load: (url) ->
+    SC.get url, (res) =>
+      @_metadata = res
+      @_metadataDep.changed()
 
-    # stream track id 293
-    SC.stream("/tracks/293", (sound) =>
+    that = this
+    SC.stream(url, {
+      whileplaying: ->
+        that.onPosition(this.position)
+    }, (sound) =>
       sound.play()
       @sound = sound
     )
 
+    return @
+
+  play: ->
+    @sound.play()
+    return @
+
+  pause: ->
+    @sound.pause()
+    return @
+
+  toggle: ->
+    @sound.togglePause()
+    return @
+
   status: ->
     @_statusDep.depend()
     _.invert(MusicPlayer.PlayerState)[@_status].toLowerCase()
+
+  title: ->
+    @_metadataDep.depend()
+    return @_metadata.title ? ""
+
+  artwork_url: ->
+    @_metadataDep.depend()
+    return @_metadata.artwork_url ? ""
+
+  onPosition: (pos) =>
+    @_position = pos
+    @_positionDep.changed()
+
+  getPosition: ->
+    @_positionDep.depend()
+    return @_position

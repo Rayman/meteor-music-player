@@ -118,6 +118,10 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @sound.togglePause()
     return @
 
+  seekTo: (pos) ->
+    @sound.setPosition(pos)
+    return @
+
   status: ->
     @_statusDep.depend()
     _.invert(MusicPlayer.PlayerState)[@_status].toLowerCase()

@@ -33,12 +33,21 @@ if (Meteor.isClient) {
     return soundcloudBackend.artwork_url();
   };
 
+  var dragging = false;
   Template.player.rendered = function () {
     var el = this.find('.player-slider input[type="range"]');
+    el.addEventListener('input', function (e) {
+      dragging = true;
+    });
+    el.addEventListener('change', function (e) {
+      dragging = false;
+      soundcloudBackend.seekTo(this.value);
+    });
 
     Deps.autorun(function () {
       var pos = soundcloudBackend.getPosition();
-      el.value = pos;
+      if (!dragging)
+        el.value = pos;
     });
 
     Deps.autorun(function () {
@@ -46,13 +55,6 @@ if (Meteor.isClient) {
       el.max = dur;
     });
   };
-
-  /*
-  Deps.autorun(function () {
-    var pos = soundcloudBackend.getPosition();
-    // console.log(pos);
-  });
-  */
 
   Template.player.duration = function () {
     var duration =  soundcloudBackend.getDuration();
@@ -78,11 +80,9 @@ if (Meteor.isClient) {
 
   Template.player.events({
     'click .player-pause': function () {
-      console.log('pause');
       soundcloudBackend.pause();
     },
     'click .player-play': function () {
-      console.log('play');
       soundcloudBackend.play();
     },
   });

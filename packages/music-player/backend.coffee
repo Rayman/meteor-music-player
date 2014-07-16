@@ -73,7 +73,6 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     return @
 
   _loaded: (e) ->
-    console.log "SoundCloud player ready"
     @_status = MusicPlayer.PlayerState.ENDED
     @_statusDep.changed()
 
@@ -86,8 +85,22 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     SC.stream(url, {
       whileplaying: ->
         that._whileplaying(this)
+      onfinish: ->
+        that._status = MusicPlayer.PlayerState.ENDED
+        that._statusDep.changed()
+      onpause: ->
+        that._status = MusicPlayer.PlayerState.PAUSED
+        that._statusDep.changed()
+      onplay: ->
+        that._status = MusicPlayer.PlayerState.PLAYING
+        that._statusDep.changed()
+      onresume: ->
+        that._status = MusicPlayer.PlayerState.PLAYING
+        that._statusDep.changed()
+      onstop: ->
+        that._status = MusicPlayer.PlayerState.ENDED
+        that._statusDep.changed()
     }, (sound) =>
-      sound.play()
       @sound = sound
     )
 
@@ -127,7 +140,6 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     if @_duration isnt sound.durationEstimate
       @_duration = sound.durationEstimate
       @_durationDep.changed()
-      console.log "@_durationDep.changed()"
 
   getPosition: ->
     @_positionDep.depend()

@@ -22,7 +22,6 @@ if (Meteor.isClient) {
 
   Template.player.statusIs = function (str) {
     var status = soundcloudBackend.status();
-    console.log('status changed:', status);
     return status == str;
   };
 
@@ -34,23 +33,56 @@ if (Meteor.isClient) {
     return soundcloudBackend.artwork_url();
   };
 
-  Template.player.position = function () {
-    return soundcloudBackend.getPosition();
+  Template.player.rendered = function () {
+    var el = this.find('.player-slider input[type="range"]');
+
+    Deps.autorun(function () {
+      var pos = soundcloudBackend.getPosition();
+      el.value = pos;
+    });
+
+    Deps.autorun(function () {
+      var dur = soundcloudBackend.getDuration();
+      el.max = dur;
+    });
   };
 
+  /*
+  Deps.autorun(function () {
+    var pos = soundcloudBackend.getPosition();
+    // console.log(pos);
+  });
+  */
+
   Template.player.duration = function () {
-    return soundcloudBackend.getDuration();
+    var duration =  soundcloudBackend.getDuration();
+    duration = moment.duration(duration, 'ms');
+    var time = moment.utc(duration.asMilliseconds());
+    if (duration.asHours() >= 1) {
+      return time.format('HH:mm:ss');
+    } else {
+      return time.format('mm:ss');
+    }
   };
 
   Template.player.remaining = function () {
-    return "0:00";
+    var duration = soundcloudBackend.getDuration() - soundcloudBackend.getPosition();
+    duration = moment.duration(duration, 'ms');
+    var time = moment.utc(duration.asMilliseconds());
+    if (duration.asHours() >= 1) {
+      return time.format('HH:mm:ss');
+    } else {
+      return time.format('mm:ss');
+    }
   };
 
   Template.player.events({
-    'click player-pause': function () {
+    'click .player-pause': function () {
+      console.log('pause');
       soundcloudBackend.pause();
     },
-    'click player-play': function () {
+    'click .player-play': function () {
+      console.log('play');
       soundcloudBackend.play();
     },
   });

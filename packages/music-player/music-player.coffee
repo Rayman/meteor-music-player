@@ -1,6 +1,7 @@
 class MusicPlayer
   constructor: (options = {}) ->
     @backends = options.backends ? [];
+    # console.log('constructor', this)
 
   # Methods
   play: ->

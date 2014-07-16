@@ -58,10 +58,10 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @_metadata = {}
     @_metadataDep = new Deps.Dependency
 
-    @_position = 0
+    @_position = null
     @_positionDep = new Deps.Dependency
 
-    @_duration = 0
+    @_duration = null
     @_durationDep = new Deps.Dependency
 
   init: ->
@@ -135,8 +135,6 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     return @_metadata.artwork_url ? ""
 
   _whileplaying: (sound) =>
-    # console.log "whileplaying", sound.position, sound.duration, sound.durationEstimate
-
     if @_position isnt sound.position
       @_position = sound.position
       @_positionDep.changed()
@@ -147,8 +145,12 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
 
   getPosition: ->
     @_positionDep.depend()
-    return @_position
+    return @_position ? 0;
 
   getDuration: ->
     @_durationDep.depend()
-    return @_duration
+    @_metadataDep.depend()
+
+    if @_duration?
+      return @_duration
+    return @_metadata.duration

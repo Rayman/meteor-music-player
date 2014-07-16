@@ -15,7 +15,6 @@ if (Meteor.isClient) {
   Template.hello.events({
     'click button': function () {
       var url = "/tracks/293"
-      console.log('loading', url);
       soundcloudBackend.load(url);
     },
   });

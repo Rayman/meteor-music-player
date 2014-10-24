@@ -7,55 +7,25 @@
 </body>
 
 <template name="hello">
-  <div class="container">
-    <h1>Reactive Player:</h1>
-    <div class="row">
-      <div class="col-md-8">
-        {{> player}}
-      </div>
-    </div>
-    <p>More content here <button type="button" class="btn btn-primary">Load song!</button></p>
-  </div>
+  <h1>Reactive Player:</h1>
+  {{> player}}
+  <p>More content here <button type="button" class="btn btn-primary">Load song!</button></p>
 </template>
 
 <template name="player">
   <div class="player">
-    <div class="player-header">
-
-      <div class="album-art">
-        <img src="{{artwork_url}}" />
-      </div>
-      <div class="song-name">{{title}}</div>
-    </div>
-    <div class="player-stats">
-      <div class="col-xs-3">
-        <span class="glyphicon glyphicon-cloud"></span> FOLLOW
-      </div>
-      <div class="col-xs-6">
-        <span class="glyphicon glyphicon-play-circle"></span> 992,978
-        <span class="glyphicon glyphicon-heart"></span> 16,739
-        <span class="glyphicon glyphicon-comment"></span> 580
-      </div>
-      <div class="col-xs-3">DOWNLOAD</div>
-    </div>
+    <img src="{{artwork_url}}" />
+    <div class="song-name">{{title}}</div>
     <div class="player-controls">
-      <div class="player-repeat"></div>
-      <div class="player-previous">
-        <span class="glyphicon glyphicon-chevron-left"></span>
-      </div>
       {{#if statusIs "loading"}}
-        <div class="player-loading"><span></span></div>
+        Loading
       {{else}}
         {{#if statusIs "playing"}}
-          <div class="player-pause"><span></span></div>
+          <button class="player-pause">Pause</button>
         {{else}}
-          <div class="player-play"><span></span></div>
+          <button class="player-play">Play</button>
         {{/if}}
       {{/if}}
-      <div class="player-previous">
-        <span class="glyphicon glyphicon-chevron-right"></span>
-      </div>
-      <div class="player-shuffle"></div>
     </div>
     <div class="player-position">
       <div class="player-length">{{duration}}</div>

@@ -21,6 +21,7 @@ if (Meteor.isClient) {
 
   Template.player.statusIs = function (str) {
     var status = soundcloudBackend.status();
+    console.log('status', status);
     return status == str;
   };
 
@@ -79,9 +80,11 @@ if (Meteor.isClient) {
 
   Template.player.events({
     'click .player-pause': function () {
+      console.log('pause', soundcloudBackend.pause);
       soundcloudBackend.pause();
     },
     'click .player-play': function () {
+      console.log('play');
       soundcloudBackend.play();
     },
   });

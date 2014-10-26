@@ -9,7 +9,9 @@
 <template name="hello">
   <h1>Reactive Player:</h1>
   {{> player}}
-  <p>More content here <button type="button" class="btn btn-primary">Load song!</button></p>
+  <p>More content here <br />
+    <button type="button" data-action="load">Load song!</button>
+  </p>
 </template>
 
 <template name="player">

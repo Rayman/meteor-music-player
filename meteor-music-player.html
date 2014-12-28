@@ -10,14 +10,16 @@
   <h1>Reactive Player:</h1>
   {{> player}}
   <p>More content here <br />
-    <button type="button" data-action="load">Load song!</button>
+    <button type="button" data-action="load">Load song from SoundCloud!</button>
+    <button type="button" data-action="loadYT">Load song from Youtube!</button>
   </p>
 </template>
 
 <template name="player">
   <div class="player">
+    <div id="youtube-embed"></div>
     <img src="{{artwork_url}}" />
-    <div class="song-name">{{title}}</div>
+    <div class="song-name">{{title}} ({{status}})</div>
     <div class="player-controls">
       {{#if statusIs "loading"}}
         Loading

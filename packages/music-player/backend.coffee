@@ -1,24 +1,35 @@
+MusicPlayer.backends = {}
+
+#dummy backend, preventing errors when no specific backend has been loaded
 class MusicPlayer.backend
   constructor: (options = {}) ->
     @name = "backend"
-    @_status
+    @_status = MusicPlayer.PlayerState.LOADING
+    @_position = 0
 
   # Methods
+  pause: ->
+    return;
+
   play: ->
-    throw new Error "Not implemented"
+    return;
 
   isPaused: ->
-    throw new Error "Not implemented"
+    return;
+
+  getPosition: ->
+    return;
+
+  getDuration: ->
+    return;
+
+  artwork_url: ->
+    return;
+
+  status: ->
+    return _.invert(MusicPlayer.PlayerState)[@_status].toLowerCase()
 
 
-
-MusicPlayer.backends = {}
-
-MusicPlayer.PlayerState =
-  LOADING:   0
-  ENDED:     1
-  PLAYING:   2
-  PAUSED:    3
 
 loadScript = (src, callback) ->
   tag = document.createElement('script')
@@ -32,37 +43,80 @@ loadScript = (src, callback) ->
 class MusicPlayer.backends.youtube extends MusicPlayer.backend
   constructor: (options = {}) ->
     @name = "youtube"
+    @daddy = options.parent
+    @videoId = options.id
+
+    @YouTube = {}
     @_status = MusicPlayer.PlayerState.LOADING
+    @daddy._statusDep.changed()
 
   init: (el) ->
-    loadScript("https://www.youtube.com/player_api", @_loaded)
+    loadScript("https://www.youtube.com/iframe_api")
 
-    window.onYouTubePlayerAPIReady = =>
+    window.onYouTubeIframeAPIReady = =>
       @_loaded()
 
-  _loaded: ->
-    console.log "YouTube player ready"
+    return @
+
+  _loaded: =>
+    options =
+      height: '480'
+      width: '640'
+      videoId: @videoId
+      events:
+        'onStateChange': @onPlayerStateChange
+    @YouTube = new YT.Player 'youtube-embed', options
+    @_status = MusicPlayer.PlayerState.ENDED #unstarted
+    @daddy._statusDep.changed()
+    console.log "#{ @YouTube } YouTube player ready"
+
+  #if backend is already loaded
+  load: (videoId) ->
+    @YouTube.loadVideoById videoId, 0, "large"
+
+  onPlayerStateChange: (event) => #more fat arrows
+    switch event.data
+      when -1 then @_status = MusicPlayer.PlayerState.ENDED #unstarted
+      when 0  then @_status = MusicPlayer.PlayerState.ENDED #ended
+      when 1  then @_status = MusicPlayer.PlayerState.PLAYING #playing
+      when 2  then @_status = MusicPlayer.PlayerState.PAUSED #paused
+      when 3  then @_status = MusicPlayer.PlayerState.LOADING #buffering
+      when 5  then @_status = MusicPlayer.PlayerState.LOADING #video cued
+    @daddy._statusDep.changed()
+    return
 
   play: ->
-    console.log "play"
+    @YouTube.playVideo()
 
+  pause: ->
+    @YouTube.pauseVideo()
+
+  getDuration: ->
+    @YouTube.getDuration()
+    
+  getPosition: ->
+    @YouTube.getCurrentTime()
 
 
 class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
   constructor: (options = {}) ->
+    @daddy = options.parent
+    @songUrl = options.id
     @name = "soundcloud"
 
-    @_status = MusicPlayer.PlayerState.LOADING
-    @_statusDep = new Deps.Dependency
+
+    #moved this dep to musicplayer class
+    #@_status = MusicPlayer.PlayerState.LOADING
+    #@_statusDep = new Tracker.Dependency
 
     @_metadata = {}
-    @_metadataDep = new Deps.Dependency
+    @_metadataDep = new Tracker.Dependency
 
-    @_position = null
-    @_positionDep = new Deps.Dependency
+    #@_position = null
+    #@_positionDep = new Tracker.Dependency
 
     @_duration = null
-    @_durationDep = new Deps.Dependency
+    @_durationDep = new Tracker.Dependency
 
   init: ->
     loadScript "//connect.soundcloud.com/sdk.js", =>
@@ -73,8 +127,10 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     return @
 
   _loaded: (e) ->
-    @_status = MusicPlayer.PlayerState.ENDED
-    @_statusDep.changed()
+    #@_status = MusicPlayer.PlayerState.ENDED
+    #@daddy._statusDep.changed()
+    #Player initialized, no song to play yet though
+    @load @songUrl
 
   load: (url) ->
     SC.get url, (res) =>
@@ -87,21 +143,24 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
         that._whileplaying(this)
       onfinish: ->
         that._status = MusicPlayer.PlayerState.ENDED
-        that._statusDep.changed()
+        that.daddy._statusDep.changed()
       onpause: ->
         that._status = MusicPlayer.PlayerState.PAUSED
-        that._statusDep.changed()
+        that.daddy._statusDep.changed()
       onplay: ->
         that._status = MusicPlayer.PlayerState.PLAYING
-        that._statusDep.changed()
+        that.daddy._statusDep.changed()
       onresume: ->
         that._status = MusicPlayer.PlayerState.PLAYING
-        that._statusDep.changed()
+        that.daddy._statusDep.changed()
       onstop: ->
         that._status = MusicPlayer.PlayerState.ENDED
-        that._statusDep.changed()
+        that.daddy._statusDep.changed()
     }, (sound) =>
       @sound = sound
+      #Finally, song ready to play
+      @_status = MusicPlayer.PlayerState.ENDED
+      @daddy._statusDep.changed()
     )
 
     return @
@@ -122,10 +181,6 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @sound.setPosition(pos)
     return @
 
-  status: ->
-    @_statusDep.depend()
-    _.invert(MusicPlayer.PlayerState)[@_status].toLowerCase()
-
   title: ->
     @_metadataDep.depend()
     return @_metadata.title ? ""
@@ -137,14 +192,13 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
   _whileplaying: (sound) =>
     if @_position isnt sound.position
       @_position = sound.position
-      @_positionDep.changed()
+      @daddy._positionDep.changed()
 
     if @_duration isnt sound.durationEstimate
       @_duration = sound.durationEstimate
       @_durationDep.changed()
 
   getPosition: ->
-    @_positionDep.depend()
     return @_position ? 0;
 
   getDuration: ->

@@ -12,12 +12,12 @@
   <p>More content here <br />
     <button type="button" data-action="load">Load song from SoundCloud!</button>
     <button type="button" data-action="loadYT">Load song from Youtube!</button>
+    <button type="button" data-action="loadYT2">Load song #2 from Youtube!</button>
   </p>
 </template>
 
 <template name="player">
   <div class="player">
-    <div id="youtube-embed"></div>
     <img src="{{artwork_url}}" />
     <div class="song-name">{{title}} ({{status}})</div>
     <div class="player-controls">
@@ -35,6 +35,9 @@
       <div class="player-length">{{duration}}</div>
       <div class="player-slider"><input type="range" /></div>
       <div class="player-remaining">{{remaining}}</div>
+    </div>
+    <div id="hiddenplaceholder" style="display:none">
+      <div id="youtube-embed"></div>
     </div>
   </div>
 </template>

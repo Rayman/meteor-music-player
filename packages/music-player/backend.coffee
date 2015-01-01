@@ -7,11 +7,14 @@ class MusicPlayer.backend
     @_status = MusicPlayer.PlayerState.LOADING
     @_position = 0
 
-  # Methods
+  #Placeholder Methods
   pause: ->
     return;
 
   play: ->
+    return;
+
+  title: ->
     return;
 
   isPaused: ->
@@ -23,12 +26,26 @@ class MusicPlayer.backend
   getDuration: ->
     return;
 
+  getRemaining: ->
+    return
+
   artwork_url: ->
     return;
 
+  #Base class methods
   status: ->
-    return _.invert(MusicPlayer.PlayerState)[@_status].toLowerCase()
+    return _.invert(MusicPlayer.PlayerState)[@_status]?.toLowerCase()
 
+  formatDuration: (duration, unit="ms") ->
+    duration =moment.duration(duration, unit)
+    time = moment.utc(duration.asMilliseconds())
+    if duration.asHours >= 1
+      return time.format('HH:mm:ss')
+    else
+      return time.format('mm:ss')
+
+  destroy: ->
+    #Removes current player backend and all associated parts
 
 
 loadScript = (src, callback) ->
@@ -62,17 +79,25 @@ class MusicPlayer.backends.youtube extends MusicPlayer.backend
     options =
       height: '480'
       width: '640'
-      videoId: @videoId
+      videoId: ""
       events:
+        'onReady' : @onReady #fires when player is really ready
         'onStateChange': @onPlayerStateChange
     @YouTube = new YT.Player 'youtube-embed', options
-    @_status = MusicPlayer.PlayerState.ENDED #unstarted
-    @daddy._statusDep.changed()
-    console.log "#{ @YouTube } YouTube player ready"
 
-  #if backend is already loaded
-  load: (videoId) ->
-    @YouTube.loadVideoById videoId, 0, "large"
+  _whilePlaying: => #callback for youtube api
+    @daddy._positionDep.changed()
+    if not @_metadata?
+      @_metadata = @YouTube.getVideoData()
+      if @_metadata?
+            @daddy._metadataDep.changed()
+
+
+  onReady: (event) =>
+    @_status = MusicPlayer.PlayerState.ENDED #unstarted
+    console.log "#{ @YouTube } YouTube player ready"
+    @updatePlayer = setInterval(@_whilePlaying, 2000)
+    @load @videoId
 
   onPlayerStateChange: (event) => #more fat arrows
     switch event.data
@@ -83,7 +108,18 @@ class MusicPlayer.backends.youtube extends MusicPlayer.backend
       when 3  then @_status = MusicPlayer.PlayerState.LOADING #buffering
       when 5  then @_status = MusicPlayer.PlayerState.LOADING #video cued
     @daddy._statusDep.changed()
+    @daddy._durationDep.changed()
     return
+
+  #if backend is already loaded
+  load: (videoId) ->
+    #clear metadata on load
+    @_metadata = undefined
+
+    @YouTube.loadVideoById videoId, 0, "large"
+    @seekTo(0);
+    @daddy._statusDep.changed()
+    @daddy._durationDep.changed()
 
   play: ->
     @YouTube.playVideo()
@@ -91,11 +127,30 @@ class MusicPlayer.backends.youtube extends MusicPlayer.backend
   pause: ->
     @YouTube.pauseVideo()
 
-  getDuration: ->
-    @YouTube.getDuration()
-    
+  seekTo: (pos) ->
+    @YouTube.seekTo(pos)
+
+  title: ->
+    return @_metadata.title ? ""
+
+  getDuration: (formatted=false) -> #return raw value from backend or formatted (mm:ss)
+    @daddy._durationDep.depend()
+    if formatted
+      return @formatDuration(@YouTube?.getDuration(),'s') #youtube returns duration in seconds
+    else
+      return @YouTube?.getDuration() #seconds
+
+  getRemaining: ->
+    d = @getDuration() - @getPosition()
+    return @formatDuration(d,'s')
+
   getPosition: ->
-    @YouTube.getCurrentTime()
+    @daddy._positionDep.depend()
+    return @YouTube?.getCurrentTime() #seconds
+
+  destroy: ->
+    clearInterval(@updatePlayer)
+    @YouTube.destroy()
 
 
 class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
@@ -104,19 +159,8 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @songUrl = options.id
     @name = "soundcloud"
 
-
-    #moved this dep to musicplayer class
-    #@_status = MusicPlayer.PlayerState.LOADING
-    #@_statusDep = new Tracker.Dependency
-
     @_metadata = {}
-    @_metadataDep = new Tracker.Dependency
-
-    #@_position = null
-    #@_positionDep = new Tracker.Dependency
-
     @_duration = null
-    @_durationDep = new Tracker.Dependency
 
   init: ->
     loadScript "//connect.soundcloud.com/sdk.js", =>
@@ -127,15 +171,13 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     return @
 
   _loaded: (e) ->
-    #@_status = MusicPlayer.PlayerState.ENDED
-    #@daddy._statusDep.changed()
     #Player initialized, no song to play yet though
     @load @songUrl
 
   load: (url) ->
     SC.get url, (res) =>
       @_metadata = res
-      @_metadataDep.changed()
+      @daddy._metadataDep.changed()
 
     that = this
     SC.stream(url, {
@@ -159,8 +201,8 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     }, (sound) =>
       @sound = sound
       #Finally, song ready to play
-      @_status = MusicPlayer.PlayerState.ENDED
-      @daddy._statusDep.changed()
+      @seekTo 0
+      do @play
     )
 
     return @
@@ -182,11 +224,9 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     return @
 
   title: ->
-    @_metadataDep.depend()
     return @_metadata.title ? ""
 
   artwork_url: ->
-    @_metadataDep.depend()
     return @_metadata.artwork_url ? ""
 
   _whileplaying: (sound) =>
@@ -196,15 +236,27 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
 
     if @_duration isnt sound.durationEstimate
       @_duration = sound.durationEstimate
-      @_durationDep.changed()
+      @daddy._durationDep.changed()
 
   getPosition: ->
+    @daddy._positionDep.depend()
     return @_position ? 0;
 
-  getDuration: ->
-    @_durationDep.depend()
-    @_metadataDep.depend()
+  getDuration: (formatted=false) ->
+    @daddy._durationDep.depend()
 
     if @_duration?
-      return @_duration
+      if formatted
+        return @formatDuration(@_duration,'ms')
+      else
+        return @_duration #seconds
+
     return @_metadata.duration
+
+  getRemaining: ->
+    d = @getDuration() - @getPosition()
+    return @formatDuration(d,'ms')
+
+  destroy: ->
+    @pause();
+    @sound.destruct();

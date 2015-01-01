@@ -14,6 +14,9 @@ if (Meteor.isClient) {
     },
     'click [data-action="loadYT"]': function() {
       musicPlayer.load("Of-lpfsBR8U", "youtube");
+    },
+    'click [data-action="loadYT2"]': function() {
+      musicPlayer.load("dFlE7_6hKUE", "youtube");
     }
   });
 
@@ -44,7 +47,6 @@ if (Meteor.isClient) {
   Template.player.helpers({
     statusIs :  function (str) {
       var status = musicPlayer.getStatus();
-      console.log('status', status);
       return status == str;
     },
 
@@ -57,25 +59,11 @@ if (Meteor.isClient) {
     },
 
     duration :  function () {
-      var duration =  musicPlayer.getDuration();
-      duration = moment.duration(duration, 'ms');
-      var time = moment.utc(duration.asMilliseconds());
-      if (duration.asHours() >= 1) {
-        return time.format('HH:mm:ss');
-      } else {
-        return time.format('mm:ss');
-      }
+      return musicPlayer.getDuration(true);
     },
 
     remaining :  function () {
-      var duration = musicPlayer.getDuration() - musicPlayer.getPosition();
-      duration = moment.duration(duration, 'ms');
-      var time = moment.utc(duration.asMilliseconds());
-      if (duration.asHours() >= 1) {
-        return time.format('HH:mm:ss');
-      } else {
-        return time.format('mm:ss');
-      }
+      return musicPlayer.getRemaining();
     },
 
     status :  function() {

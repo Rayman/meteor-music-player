@@ -7,16 +7,20 @@ class MusicPlayer
 
     @_statusDep = new Tracker.Dependency
     @_positionDep = new Tracker.Dependency
+    @_durationDep = new Tracker.Dependency
+    @_metadataDep = new Tracker.Dependency
+
 
   load: (url, backend="soundcloud") ->
     if(@backend.name isnt backend)
       #"destroy/pause/deactivate" old backend
-      #I'm just being polite here to call pause on the current backend, but we should maybe preserve
-      #resources and do a little bit more cleaning before loading in the other backend
-      do @pause
+      do @backend.pause
 
-      #load new backend and play song
-      @backends[backend] = new MusicPlayer.backends[backend]({parent: this, id: url}).init();
+      if backend not of @backends
+        console.log "create new backend: #{ backend }"
+        #load new backend and play song
+        @backends[backend] = new MusicPlayer.backends[backend]({parent: this, id: url}).init();
+
       @backend = @backends[backend]; #reference
     else
       @backend.load(url);
@@ -60,14 +64,21 @@ class MusicPlayer
 
   # Getters
   getArtwork: -> #returns artwork url if available
+    @_metadataDep.depend()
     return @backend.artwork_url();
 
   getVolume: -> # returns the current volume, in the range of [0, 100].
     return 50;
     throw new Error("Not implemented");
 
-  getDuration: -> # returns current sound duration in milliseconds.
-    return @backend.getDuration();
+  getDuration: (formatted=false) -> # returns current sound duration in milliseconds.
+    @_durationDep.depend();
+    @_positionDep.depend();
+    return @backend.getDuration(formatted);
+
+  getRemaining: -> #get remaining time, formatted
+    @_positionDep.depend()
+    return @backend.getRemaining()
 
   getPosition: -> # returns current sound position in milliseconds.
     @_positionDep.depend();
@@ -87,7 +98,8 @@ class MusicPlayer
     return @backend.status();
 
   getTitle: -> #returns title of current song
-    return @backend.title;
+    @_metadataDep.depend()
+    return @backend.title();
 
   isPaused: -> # whether the widget is paused.
     return true;

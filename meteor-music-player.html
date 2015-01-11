@@ -9,10 +9,10 @@
 <template name="hello">
   <h1>Reactive Player:</h1>
   {{> player}}
-  <p>More content here <br />
-    <button type="button" data-action="load">Load song from SoundCloud!</button>
-    <button type="button" data-action="loadYT">Load song from Youtube!</button>
-    <button type="button" data-action="loadYT2">Load song #2 from Youtube!</button>
+  <p>
+    <button type="button" data-action="load">Add song from SoundCloud!</button>
+    <button type="button" data-action="loadYT">Add song from Youtube!</button>
+    <button type="button" data-action="loadYT2">Add song #2 from Youtube!</button>
   </p>
 </template>
 
@@ -24,11 +24,14 @@
       {{#if statusIs "loading"}}
         Loading
       {{else}}
+        <button class="player-prev">|&larr;</button>
         {{#if statusIs "playing"}}
           <button class="player-pause">Pause</button>
         {{else}}
           <button class="player-play">Play</button>
         {{/if}}
+        <button class="player-next">&rarr;|</button>
+        <button class="player-mute">{{#if getMuted }}unmute{{else}}mute{{/if}}</button>
       {{/if}}
     </div>
     <div class="player-position">
@@ -36,6 +39,13 @@
       <div class="player-slider"><input type="range" /></div>
       <div class="player-remaining">{{remaining}}</div>
     </div>
+    <h2>The queue</h2>
+    <ol>
+    {{#each queuedSongs}}
+      <li>{{url}} ( {{backend}} ) <button class="song-play">play</button></li>
+    {{/each}}
+    </ol>
+
     <div id="hiddenplaceholder" style="display:none">
       <div id="youtube-embed"></div>
     </div>

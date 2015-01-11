@@ -1,6 +1,8 @@
 class MusicPlayer
   constructor: (options = {}) ->
     @backends = options.backends ? [];
+    @queue = options.queue ? []; #load queue externally or use addtoqueue methods
+    @playing = null;
 
     @backend = new MusicPlayer.backend(); #start with dummy backend, prevents errors on load
     # console.log('constructor', this)
@@ -9,30 +11,52 @@ class MusicPlayer
     @_positionDep = new Tracker.Dependency
     @_durationDep = new Tracker.Dependency
     @_metadataDep = new Tracker.Dependency
+    @_queueDep = new Tracker.Dependency
 
 
-  load: (url, backend="soundcloud") ->
-    if(@backend.name isnt backend)
+  load: (song) ->
+    if(@backend.name isnt song.backend)
       #"destroy/pause/deactivate" old backend
       do @backend.pause
 
-      if backend not of @backends
-        console.log "create new backend: #{ backend }"
+      if song.backend not of @backends
+        console.log "create new backend: #{ song.backend }"
         #load new backend and play song
-        @backends[backend] = new MusicPlayer.backends[backend]({parent: this, id: url}).init();
+        @backends[song.backend] = new MusicPlayer.backends[song.backend]({parent: this, id: song.url}).init();
 
-      @backend = @backends[backend]; #reference
+      @backend = @backends[song.backend]; #reference
     else
-      @backend.load(url);
-    return true;
+      @backend.load(song.url)
+
+    @playing = song.index;
+    return true
+
+  #adds a song object to the queue
+  addToQueue: (song) -> #song Object
+    if song.url? and song.backend?
+      if not song.index
+        song.index = @queue.length  #add to back of queue
+      @queue.push(song)
+      @_queueDep.changed()
+    else
+      return false
+
+  #getter for queue object
+  getQueue: ->
+    @_queueDep.depend()
+    return _.sortBy(@queue, (song) -> return song.index; );
 
 
-
-  # Methods, these calls should all be wired to there respective backend call
-  play: ->
-    console.log "play"
-    @backend.play();
-
+  #backend related Methods - these calls should all be wired to there respective backend call
+  play: (songIndex=undefined) -> #reverse from pause, or with a song defined load and play song
+    if songIndex? and songIndex >=0
+      song = _.find(@queue, (song) -> return song.index is songIndex; )
+      @load(song)
+    else
+      if @playing isnt null
+        @backend.play()
+      else
+        console.warn("nothing to play");
 
   pause: ->
     console.log "pause #{ @pause }"
@@ -40,19 +64,17 @@ class MusicPlayer
 
   toggle: ->
     console.log "toggle"
-    @backend.togglePause();
+    @backend.togglePause()
 
   mute: ->
     console.log "mute"
-    throw new Error("Not implemented");
+    @backend.toggleMute()
 
   next: ->
-    console.log "next"
-    throw new Error("Not implemented");
+    @play(@playing+1)
 
   prev: ->
-    console.log "prev"
-    throw new Error("Not implemented");
+    @play(@playing-1)
 
   seekTo: (pos) ->
     console.log "seekTo #{ pos }"
@@ -91,7 +113,7 @@ class MusicPlayer
     throw new Error("Not implemented");
 
   getCurrentSoundIndex: -> # returns the index of current sound.
-    throw new Error("Not implemented");
+    return @playing;
 
   getStatus: -> #get player state (MusicPlayer.PlayerState)
     @_statusDep.depend();
@@ -100,6 +122,10 @@ class MusicPlayer
   getTitle: -> #returns title of current song
     @_metadataDep.depend()
     return @backend.title();
+
+  getMuted: -> #returns if player is currently muted
+    @_statusDep.depend();
+    return @backend.getMuted();
 
   isPaused: -> # whether the widget is paused.
     return true;

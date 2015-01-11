@@ -127,6 +127,16 @@ class MusicPlayer.backends.youtube extends MusicPlayer.backend
   pause: ->
     @YouTube.pauseVideo()
 
+  toggleMute: ->
+    if @YouTube.isMuted()
+      @YouTube.unMute()
+    else
+      @YouTube.mute()
+    @daddy._statusDep.changed()
+
+  getMuted: ->
+    return @YouTube.isMuted()
+
   seekTo: (pos) ->
     @YouTube.seekTo(pos)
 
@@ -175,6 +185,8 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
     @load @songUrl
 
   load: (url) ->
+    if @sound?
+      @sound.destruct()
     SC.get url, (res) =>
       @_metadata = res
       @daddy._metadataDep.changed()
@@ -218,6 +230,14 @@ class MusicPlayer.backends.soundcloud extends MusicPlayer.backend
   toggle: ->
     @sound.togglePause()
     return @
+
+  toggleMute: ->
+    @sound.toggleMute()
+    @daddy._statusDep.changed()
+
+
+  getMuted: ->
+    return @sound.muted
 
   seekTo: (pos) ->
     @sound.setPosition(pos)

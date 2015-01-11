@@ -10,13 +10,16 @@ if (Meteor.isClient) {
 
   Template.hello.events({
     'click [data-action="load"]': function () {
-      musicPlayer.load("/tracks/293", "soundcloud");
+      var song = {url:"/tracks/293", backend:"soundcloud"};
+      musicPlayer.addToQueue(song);
     },
     'click [data-action="loadYT"]': function() {
-      musicPlayer.load("Of-lpfsBR8U", "youtube");
+      var song = {url:"Of-lpfsBR8U", backend:"youtube"};
+      musicPlayer.addToQueue(song)
     },
     'click [data-action="loadYT2"]': function() {
-      musicPlayer.load("dFlE7_6hKUE", "youtube");
+      var song = {url:"dFlE7_6hKUE", backend:"youtube"};
+      musicPlayer.addToQueue(song);
     }
   });
 
@@ -70,9 +73,17 @@ if (Meteor.isClient) {
       return musicPlayer.getStatus();
     },
 
+    queuedSongs: function() {
+      return musicPlayer.getQueue();
+    },
+
     //for example, disable some interface components while loading track
     isLoading: function() {
       return (musicPlayer.getStatus() === musicPlayer.PlayerState.LOADING);
+    },
+
+    getMuted: function() {
+      return musicPlayer.getMuted();
     }
   });
 
@@ -83,5 +94,17 @@ if (Meteor.isClient) {
     'click .player-play': function () {
       musicPlayer.play();
     },
+    'click .player-next': function () {
+      musicPlayer.next();
+    },
+    'click .player-prev': function () {
+      musicPlayer.prev();
+    },
+    'click .player-mute': function() {
+      musicPlayer.mute();
+    },
+    'click .song-play': function() {
+      musicPlayer.play(this.index);
+    }
   });
 }

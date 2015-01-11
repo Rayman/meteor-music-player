@@ -9,10 +9,14 @@
 <template name="hello">
   <h1>Reactive Player:</h1>
   {{> player}}
+  <h3>Add song</h3>
   <p>
-    <button type="button" data-action="load">Add song from SoundCloud!</button>
-    <button type="button" data-action="loadYT">Add song from Youtube!</button>
-    <button type="button" data-action="loadYT2">Add song #2 from Youtube!</button>
+    <input class="addsong id" type="text" placeholder="youtube id/soundcloud id" />
+    <select class="addsong backend">
+      <option>youtube</option>
+      <option>soundcloud</option>
+    </select>
+    <button class="addsong add">Add!</button>
   </p>
 </template>
 

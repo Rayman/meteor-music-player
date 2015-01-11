@@ -20,6 +20,13 @@ if (Meteor.isClient) {
     'click [data-action="loadYT2"]': function() {
       var song = {url:"dFlE7_6hKUE", backend:"youtube"};
       musicPlayer.addToQueue(song);
+    },
+    'click .addsong.add': function() {
+      var template = Template.instance();
+      var s_url = template.$(".addsong.id").val();
+      var s_backend = template.$(".addsong.backend").val();
+      var song = {url:s_url, backend:s_backend};
+      musicPlayer.addToQueue(song);
     }
   });
 
